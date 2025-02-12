@@ -1,0 +1,64 @@
+{% extends 'attendance/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h3 class="text-center">Welcome, {{ user.username }}</h3>
+
+<!-- Mark Attendance Section -->
+<div class="text-center mt-4">
+    <h5>Mark Attendance</h5>
+    <video id="camera" autoplay class="w-100"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <input type="hidden" name="image" id="imageData">
+
+    <form method="post" action="{% url 'mark_attendance' %}">
+        {% csrf_token %}
+        <input type="hidden" name="image" id="imageInput">
+        <button type="submit" class="btn btn-success mt-2" style="display: none;" id="submitBtn">Mark Attendance</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+    <script>
+        const video = document.getElementById("camera");
+        const canvas = document.getElementById("canvas");
+        const imageInput = document.getElementById("imageInput");
+        const submitBtn = document.getElementById("submitBtn");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => { video.srcObject = stream; setTimeout(captureImage, 3000); });
+
+        function captureImage() {
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            imageInput.value = canvas.toDataURL("image/jpeg");
+            submitBtn.style.display = "block";
+        }
+    </script>
+</div>
+
+<!-- Attendance History -->
+<h5 class="mt-4">Your Attendance History</h5>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.date }}</td>
+            <td>{{ record.check_in|default:"Not Checked In" }}</td>
+            <td>{{ record.check_out|default:"Not Checked Out" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center">No records found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

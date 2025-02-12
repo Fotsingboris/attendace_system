@@ -1,0 +1,68 @@
+{% extends 'attendance/base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3 class="text-center">Register</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <input type="text" class="form-control" name="username" placeholder="Username" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" name="password" placeholder="Password" required>
+            </div>
+
+            <video id="camera" autoplay class="w-100 border rounded"></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            <input type="hidden" name="image" id="imageData">
+            <p id="instruction" class="text-danger text-center fw-bold"></p>
+
+            <!-- Capture Image Button -->
+            <button type="button" class="btn btn-warning w-100 mt-3" id="captureBtn">Capture Image</button>
+
+            <!-- Register Button (Disabled until an image is captured) -->
+            <button type="submit" class="btn btn-primary w-100 mt-3" id="registerBtn" disabled>Register</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script>
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const imageDataInput = document.getElementById("imageData");
+    const captureBtn = document.getElementById("captureBtn");
+    const registerBtn = document.getElementById("registerBtn");
+
+    // Start camera stream
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+            video.srcObject = stream;
+        })
+        .catch((err) => {
+            alert("Please allow camera access to register.");
+            console.error("Camera access error:", err);
+        });
+
+    // Capture image when button is clicked
+    captureBtn.addEventListener("click", () => {
+        const context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert captured image to Base64 and store in hidden input
+        imageDataInput.value = canvas.toDataURL("image/jpeg");
+
+        // Show a preview of the captured image
+        video.style.display = "none"; // Hide video
+        canvas.style.display = "block"; // Show captured image preview
+
+        // Enable Register button
+        registerBtn.disabled = false;
+    });
+</script>
+{% endblock %}
