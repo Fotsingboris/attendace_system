@@ -5,39 +5,46 @@
 {% block content %}
 <h3 class="text-center">Welcome, {{ user.username }}</h3>
 
-<!-- Mark Attendance Section -->
-<div class="text-center mt-4">
-    <h5>Mark Attendance</h5>
-    <video id="camera" autoplay class="w-100"></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <input type="hidden" name="image" id="imageData">
+<!-- Check if attendance for today is already complete -->
+{% if today_record and today_record.check_in and today_record.check_out %}
+    <div class="alert alert-success text-center">
+        <strong>You have already signed in and out today.</strong>
+    </div>
+{% else %}
+    <!-- Mark Attendance Section -->
+    <div class="text-center mt-4">
+        <h5>Mark Attendance</h5>
+        <video id="camera" autoplay class="w-100"></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <input type="hidden" name="image" id="imageData">
 
-    <form method="post" action="{% url 'mark_attendance' %}">
-        {% csrf_token %}
-        <input type="hidden" name="image" id="imageInput">
-        <button type="submit" class="btn btn-success mt-2" style="display: none;" id="submitBtn">Mark Attendance</button>
-    </form>
+        <form method="post" action="{% url 'mark_attendance' %}">
+            {% csrf_token %}
+            <input type="hidden" name="image" id="imageInput">
+            <button type="submit" class="btn btn-success mt-2" style="display: none;" id="submitBtn">Mark Attendance</button>
+        </form>
 
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-    <script>
-        const video = document.getElementById("camera");
-        const canvas = document.getElementById("canvas");
-        const imageInput = document.getElementById("imageInput");
-        const submitBtn = document.getElementById("submitBtn");
+        <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+        <script>
+            const video = document.getElementById("camera");
+            const canvas = document.getElementById("canvas");
+            const imageInput = document.getElementById("imageInput");
+            const submitBtn = document.getElementById("submitBtn");
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => { video.srcObject = stream; setTimeout(captureImage, 3000); });
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => { video.srcObject = stream; setTimeout(captureImage, 3000); });
 
-        function captureImage() {
-            const context = canvas.getContext("2d");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            imageInput.value = canvas.toDataURL("image/jpeg");
-            submitBtn.style.display = "block";
-        }
-    </script>
-</div>
+            function captureImage() {
+                const context = canvas.getContext("2d");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                imageInput.value = canvas.toDataURL("image/jpeg");
+                submitBtn.style.display = "block";
+            }
+        </script>
+    </div>
+{% endif %}
 
 <!-- Attendance History -->
 <h5 class="mt-4">Your Attendance History</h5>

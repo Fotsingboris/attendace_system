@@ -1,3 +1,6 @@
+
+
+import base64
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -5,9 +8,9 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from .models import Employee, Attendance
 from .utils import get_face_embedding, verify_face
-import base64
-from datetime import datetime
 
+from django.contrib.admin.views.decorators import staff_member_required
+from datetime import date, datetime
 from django.db import transaction
 
 
@@ -115,9 +118,57 @@ def mark_attendance(request):
 
 @login_required
 def dashboard(request):
-    records = Attendance.objects.filter(employee=request.user)
-    return render(request, "attendance/dashboard.html", {"records": records})
-
+    # Get today's attendance records for the logged-in user
+    records = Attendance.objects.filter(employee=request.user, date=datetime.today().date())
+    
+    # If you want to access the latest attendance record:
+    today_record = records.last() if records.exists() else None
+    
+    return render(request, 'attendance/dashboard.html', {'records': records, 'today_record': today_record})
 def user_logout(request):
     logout(request)
     return redirect("login")
+
+
+from django.utils.dateparse import parse_date
+
+@staff_member_required
+def admin_dashboard(request):
+    # Get the selected filter values
+    filter_date = request.GET.get('date', None)
+    filter_user = request.GET.get('user', None)
+    
+    # Set default values for filters if none are provided
+    today = datetime.today().date()
+    filter_date = parse_date(filter_date) if filter_date else today
+    
+    # Fetch all employees for the user filter dropdown
+    users = Employee.objects.all()
+
+    # Filter attendance based on selected date and user
+    if filter_user:
+        filtered_attendance = Attendance.objects.filter(date=filter_date, employee_id=filter_user)
+    else:
+        filtered_attendance = Attendance.objects.filter(date=filter_date)
+
+    # Fetch statistics
+    total_employees = Employee.objects.count()
+    total_attendance = Attendance.objects.count()
+    today_attendance = Attendance.objects.filter(date=today).count()
+    employees_without_checkin_today = Employee.objects.exclude(
+        id__in=Attendance.objects.filter(date=today).values('employee')
+    ).count()
+
+    # Pass the context to the template
+    context = {
+        'total_employees': total_employees,
+        'total_attendance': total_attendance,
+        'today_attendance': today_attendance,
+        'employees_without_checkin_today': employees_without_checkin_today,
+        'filtered_attendance_list': filtered_attendance,
+        'filter_date': filter_date,
+        'filter_user': filter_user,
+        'users': users,
+    }
+    
+    return render(request, 'attendance/admin_dashboard.html', context)
