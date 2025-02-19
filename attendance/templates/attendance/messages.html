@@ -1,0 +1,32 @@
+{% load static %}
+{% load i18n %}
+
+<div class="row">
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for message in messages %}
+                let icon = '';
+                {% if message.tags == 'alert-debug' %}
+                    icon = 'info';
+                {% elif message.tags == 'alert-info' %}
+                    icon = 'info';
+                {% elif message.tags == 'alert-success' %}
+                    icon = 'success';
+                {% elif message.tags == 'alert-warning' %}
+                    icon = 'warning';
+                {% elif message.tags == 'alert-error' %}
+                    icon = 'error';
+                {% endif %}
+                
+                Swal.fire({
+                    title: '{% if message.tags == "alert-success" %}Success!{% elif message.tags == "alert-error" %}Error!{% elif message.tags == "alert-info" %}Info{% elif message.tags == "alert-warning" %}Warning!{% else %}Alert{% endif %}',
+                    text: "{{ message|escapejs }}",
+                    icon: icon,
+                    confirmButtonText: 'OK'
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+</div>

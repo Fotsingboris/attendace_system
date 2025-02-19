@@ -34,18 +34,21 @@
     </nav>
 
     <!-- Flash Messages -->
-    <div class="container mt-3">
+    {% comment %} <div class="container mt-3">
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
-    </div>
+    </div> {% endcomment %}
 
     <!-- Main Content -->
     <div class="container mt-4">
+        {% include 'attendance/messages.html' %}
+
         {% block content %}{% endblock %}
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </body>
 </html>
