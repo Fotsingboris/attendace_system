@@ -1,13 +1,14 @@
-
 {% extends 'attendance/base.html' %}
 {% load static %}
 
 {% block title %}Register{% endblock %}
 
+
 {% block content %}
-<div class="d-flex justify-content-center align-items-center vh-100">
-    <div class="card shadow-lg" style="width: 30rem; border-radius: 15px;">
-        <img src="{% static 'image/register.svg' %}" class="card-img-top" alt="Register Image" style="border-top-left-radius: 15px; border-top-right-radius: 15px; height: 200px; object-fit: cover;">
+<div class="d-flex my-5 justify-content-center align-items-center vh-100">
+    <div class="card shadow-lg p-3" style="width: 35rem; max-width: 90vw; border-radius: 15px;">
+        <img src="{% static 'image/register.svg' %}" class="card-img-top" alt="Register Image" 
+             style="border-top-left-radius: 15px; border-top-right-radius: 15px; height: 250px; object-fit: cover;">
         <div class="card-body">
             <h3 class="text-center mb-4">Register</h3>
             <form method="post">
@@ -19,22 +20,90 @@
                     <input type="password" class="form-control" name="password" placeholder="Password" required>
                 </div>
 
-                <video id="camera" autoplay class="w-100 border rounded"></video>
-                <canvas id="canvas" style="display: none;"></canvas>
+                <div class="text-center">
+                    <video id="camera" autoplay class="w-100 border rounded" style="max-height: 300px;"></video>
+                    <canvas id="canvas" style="display: none;" class="w-100 border rounded"></canvas>
+                </div>
                 <input type="hidden" name="image" id="imageData">
                 <p id="instruction" class="text-danger text-center fw-bold"></p>
 
-                <!-- Capture Image Button -->
-                <button type="button" class="btn btn-warning w-100 mt-3" id="captureBtn">Capture Image</button>
+                <!-- Capture & Retake Image Buttons -->
+                <div class="d-flex gap-2 mt-3">
+                    <button type="button" class="btn btn-warning flex-fill" id="captureBtn">Capture Image</button>
+                    <button type="button" class="btn btn-secondary flex-fill" id="retakeBtn" style="display: none;">Retake</button>
+                </div>
 
                 <!-- Register Button (Disabled until an image is captured) -->
                 <button type="submit" class="btn btn-primary w-100 mt-3" id="registerBtn" disabled>Register</button>
-                <p class="mt-4"> Already have an account ?<a href="{% url 'login' %}">Login now</a></p>
-
+                
+                <p class="mt-4 text-center">Already have an account? 
+                    <a href="{% url 'login' %}">Login now</a>
+                </p>
             </form>
         </div>
     </div>
 </div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const password1 = document.querySelector("input[name='password']");
+
+        function showFeedback(field, message, isValid) {
+            // Remove previous feedback
+            const existingFeedback = field.parentNode.querySelector(".feedback-message");
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+
+            // Create feedback message
+            const feedbackElement = document.createElement("div");
+            feedbackElement.className = "feedback-message mt-1";
+            feedbackElement.innerText = message;
+
+            // Apply styles based on validity
+            if (isValid) {
+                field.classList.remove("is-invalid");
+                field.classList.add("is-valid");
+                feedbackElement.classList.add("text-success");
+            } else {
+                field.classList.remove("is-valid");
+                field.classList.add("is-invalid");
+                feedbackElement.classList.add("text-danger");
+            }
+
+            // Append feedback message
+            field.parentNode.appendChild(feedbackElement);
+        }
+
+        function validatePassword() {
+            const passwordValue = password1.value;
+
+            if (passwordValue.length < 8) {
+                showFeedback(password1, "Password must be at least 8 characters long.", false);
+                return false;
+            }
+
+            const hasUppercase = /[A-Z]/.test(passwordValue);
+            const hasLowercase = /[a-z]/.test(passwordValue);
+            const hasNumber = /[0-9]/.test(passwordValue);
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(passwordValue);
+
+            if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+                showFeedback(password1, "Password must include uppercase, lowercase, number, and special character.", false);
+                return false;
+            }
+
+            showFeedback(password1, "Password is strong!", true);
+            return true;
+        }
+
+        // Validate password in real-time
+        password1.addEventListener("input", validatePassword);
+    });
+</script>
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 <script>
@@ -42,6 +111,7 @@
     const canvas = document.getElementById("canvas");
     const imageDataInput = document.getElementById("imageData");
     const captureBtn = document.getElementById("captureBtn");
+    const retakeBtn = document.getElementById("retakeBtn");
     const registerBtn = document.getElementById("registerBtn");
 
     // Start camera stream
@@ -54,22 +124,33 @@
             console.error("Camera access error:", err);
         });
 
-    // Capture image when button is clicked
+    // Capture image
     captureBtn.addEventListener("click", () => {
         const context = canvas.getContext("2d");
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Convert captured image to Base64 and store in hidden input
+        // Convert image to Base64
         imageDataInput.value = canvas.toDataURL("image/jpeg");
 
-        // Show a preview of the captured image
-        video.style.display = "none"; // Hide video
-        canvas.style.display = "block"; // Show captured image preview
+        // Hide video, show captured image
+        video.style.display = "none";
+        canvas.style.display = "block";
 
-        // Enable Register button
+        // Show retake button, enable register button
+        retakeBtn.style.display = "inline-block";
         registerBtn.disabled = false;
     });
+
+    // Retake image
+    retakeBtn.addEventListener("click", () => {
+        video.style.display = "block";
+        canvas.style.display = "none";
+        registerBtn.disabled = true;
+        retakeBtn.style.display = "none";
+    });
 </script>
+
+
 {% endblock %}

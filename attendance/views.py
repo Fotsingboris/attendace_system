@@ -68,6 +68,7 @@ def user_login(request):
         
         if user:
             login(request, user)
+            messages.success(request, "Login Sucessfull")
             return redirect("dashboard")
         messages.error(request, "Invalid credentials.")
     
